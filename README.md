@@ -1,41 +1,30 @@
-# Enterprise Campus Network Simulation
+# Highly Available Campus Network Simulation
 
 ## 📌 Project Overview
-This project simulates a scalable, multi-tier campus network architecture using Cisco Packet Tracer. The objective was to design a network with strict logical segmentation, centralized routing, and integrated network services (DHCP, DNS, HTTP) across both wired and wireless infrastructure.
+This project simulates a highly resilient, multi-tier campus network architecture using Cisco Packet Tracer. The objective was to design a scalable enterprise network featuring strict logical segmentation, centralized network services, and robust High Availability (HA) at both Layer 2 and Layer 3 to eliminate single points of failure.
 
-## 🏗️ Topology & Architecture
-![Network Topology](docs/campus_network2.png) 
+## ⚙️ Architecture & Technologies Implemented
+The network is built around a redundant routing and distribution core, effectively segmenting Staff Operations, a Server Farm, and Student Access zones.
 
+![Network Topology](docs/campus_network2.png)
+* **First Hop Redundancy (HSRP):** Deployed dual routers (Primary/Standby) sharing virtual IP gateways to ensure uninterrupted inter-VLAN routing during hardware failures.
+* **Spanning Tree (Rapid PVST+):** Configured primary and secondary root bridges across redundant distribution switches to prevent Layer 2 broadcast loops while maintaining active backup paths.
+* **Extended Access Control Lists (ACLs):** Implemented strict network security policies at the routing layer, actively denying student VLANs access to the Staff administration network.
+* **VLANs & 802.1Q Trunking:** Isolated broadcast domains for distinct classrooms and management infrastructure to improve performance and security.
+* **Router-on-a-Stick (Inter-VLAN):** Configured 802.1Q encapsulated sub-interfaces on central routers to facilitate controlled inter-zone communication.
+* **Core Network Services (DHCP, DNS, HTTP):** Centralized DHCP utilizing IP Helper addressing across broadcast boundaries, alongside internal domain resolution (`fcicollege.edu`).
 
-The network is built around a central routing hub (R1) connecting three primary zones:
-1.  **Staff Operations:** (`192.168.0.0/24`)
-2.  **Data Center / Server Farm:** (`203.172.16.0/24`) Hosting internal academic and sports web portals.
-3.  **Student Campus / Classrooms:** Segmented into multiple VLANs using an 802.1Q trunk.
-
-## ⚙️ Technologies & Protocols Implemented
-* **VLAN Configuration & 802.1Q Trunking:** Isolated broadcast domains for Classrooms 1, 2, and 3 to improve security and network performance.
-* **Router-on-a-Stick (Inter-VLAN Routing):** Configured sub-interfaces on the central Cisco router to route traffic between the disparate campus VLANs.
-* **DHCP with IP Helper:** Centralized DHCP server in a management VLAN, utilizing `ip helper-address` on the router to forward broadcast requests across subnet boundaries.
-* **DNS & HTTP Services:** Integrated internal domain resolution for user-friendly access to the server farm (`fcicollege.edu`).
-* **Wireless Edge:** Deployed Access Points to support mobile devices and laptops within the classroom VLANs.
-
-## 📊 IP Addressing Scheme
-| Network / VLAN | VLAN ID | Subnet | Default Gateway | Purpose |
+## 📊 IP Addressing & HSRP Scheme
+| Network Zone | VLAN | Subnet | Virtual Gateway (VIP) | Physical Router IPs |
 | :--- | :---: | :--- | :--- | :--- |
-| Staff | - | `192.168.0.0/24` | `192.168.0.1` | Administration |
-| Data Center | - | `203.172.16.0/24` | `203.172.16.1` | Web Hosting |
-| Classroom 1 | 10 | `172.16.10.0/24` | `172.16.10.1` | Student Access |
-| Classroom 2 | 20 | `172.16.20.0/24` | `172.16.20.1` | Student Access |
-| Classroom 3 | 30 | `172.16.30.0/24` | `172.16.30.1` | Student Access |
-| Management/DHCP| 99 | `172.16.99.0/24` | `172.16.99.1` | Infrastructure |
+| Staff Admin | - | `192.168.0.0/24` | `192.168.0.1` | - |
+| Data Center | - | `203.172.16.0/24`| `203.172.16.1` | - |
+| Classroom 1 | 10 | `172.16.10.0/24` | `172.16.10.1` | R1: `.2`, R2: `.3` |
+| Classroom 2 | 20 | `172.16.20.0/24` | `172.16.20.1` | R1: `.2`, R2: `.3` |
+| Classroom 3 | 30 | `172.16.30.0/24` | `172.16.30.1` | R1: `.2`, R2: `.3` |
+| Management | 99 | `172.16.99.0/24` | `172.16.99.1` | R1: `.2`, R2: `.3` |
 
-## 🚀 How to Run the Simulation
-1. Clone this repository to your local machine.
-2. Open `SimpleCollegeNetwork.pkt` using Cisco Packet Tracer (Version 9.0.0 or higher).
-3. **Test DHCP:** Open any laptop in Classroom 1, toggle the IP configuration to Static, then back to DHCP. It will pull a `172.16.10.x` address.
-4. **Test Routing & DNS:** Open the web browser on the Staff PC (`192.168.0.10`) and navigate to `academics.fcicollege.edu`.
-
-## 🔮 Future Improvements
-* Implement **HSRP** for default gateway redundancy.
-* Introduce **Access Control Lists (ACLs)** to restrict student VLANs from accessing the Staff management network.
-* Add redundant distribution switches and configure **Spanning Tree Protocol (STP)** to eliminate single points of failure.
+## 🚀 Simulation Testing Guide
+1. **Test HSRP Failover:** Open a Student PC command prompt and run a continuous ping to the server farm (`ping -t 203.172.16.254`). Deliberately sever the link between R1 and CLS_SW1; observe the traffic seamlessly reroute through R2.
+2. **Verify ACL Security:** Attempt to ping a Staff PC (`192.168.0.10`) from any Classroom PC. The ICMP request will drop, confirming the security boundary is active.
+3. **Test DHCP & DNS:** Toggle the IP configuration to Static and back to DHCP on a Classroom 1 laptop to pull a `172.16.10.x` address, then browse to `academics.fcicollege.edu`.

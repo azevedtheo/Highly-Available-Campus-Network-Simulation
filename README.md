@@ -4,7 +4,7 @@
 This project simulates a scalable, multi-tier campus network architecture using Cisco Packet Tracer. The objective was to design a network with strict logical segmentation, centralized routing, and integrated network services (DHCP, DNS, HTTP) across both wired and wireless infrastructure.
 
 ## 🏗️ Topology & Architecture
-![Network Topology](docs/campus_network.png) 
+![Network Topology](docs/campus_network2.png) 
 
 
 The network is built around a central routing hub (R1) connecting three primary zones:
